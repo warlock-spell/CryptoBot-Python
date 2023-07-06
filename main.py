@@ -8,7 +8,6 @@ import tkinter as tk
 import logging
 from bitmex import get_contracts
 
-
 logger = logging.getLogger()
 
 logger.setLevel(logging.INFO)
@@ -25,34 +24,30 @@ file_handler.setLevel(logging.DEBUG)
 logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
 
-
-logger.debug("This is a debug message")
-logger.info("This is an info message")
-logger.warning("This is a warning message")
-logger.error("This is an error message")
-logger.critical("This is a critical message")
-
-
 if __name__ == "__main__":
 
     bitmex_contracts = get_contracts()
 
     root = tk.Tk()
 
+    APP_BACKGROUND = 'gray12'
+    CONTRACTS_FOREGROUND = 'SteelBlue1'
+
+    root.configure(bg=APP_BACKGROUND)
+
+    calibri_font = ("Calibri", 12, "normal")
+
     row_count, col_count = 0, 0
 
     for contract in bitmex_contracts:
-        # label -> window, text
-        label_widget = tk.Label(root, text=contract)
-        # pack -> add to window
-        # grid -> add to window
-        label_widget.grid(row=row_count, column=col_count)
+        label_widget = tk.Label(root, text=contract, bg=APP_BACKGROUND, fg=CONTRACTS_FOREGROUND, width=14, font=calibri_font)
+        label_widget.grid(row=row_count, column=col_count,
+                          sticky="ew")  # sticky="ew" makes the widget expand horizontally
 
         if row_count == 4:
-            col_count+=1
+            col_count += 1
             row_count = 0
         else:
-            row_count+=1
+            row_count += 1
 
-    # Start event loop, it avoids the termination of program
     root.mainloop()
