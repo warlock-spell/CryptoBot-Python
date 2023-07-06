@@ -6,7 +6,7 @@
 
 import tkinter as tk
 import logging
-from bitmex import get_contracts
+from connectors.binance_futures import BinanceFuturesClient
 
 logger = logging.getLogger()
 
@@ -26,7 +26,7 @@ logger.addHandler(file_handler)
 
 if __name__ == "__main__":
 
-    bitmex_contracts = get_contracts()
+    binance_client = BinanceFuturesClient(testnet=True)
 
     root = tk.Tk()
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     row_count, col_count = 0, 0
 
-    for contract in bitmex_contracts:
+    for contract in binance_client.get_contract():
         label_widget = tk.Label(root, text=contract, bg=APP_BACKGROUND, fg=CONTRACTS_FOREGROUND, width=14, font=calibri_font)
         label_widget.grid(row=row_count, column=col_count,
                           sticky="ew")  # sticky="ew" makes the widget expand horizontally
