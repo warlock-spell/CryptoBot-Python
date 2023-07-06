@@ -6,6 +6,8 @@
 
 import tkinter as tk
 import logging
+from bitmex import get_contracts
+
 
 logger = logging.getLogger()
 
@@ -32,6 +34,25 @@ logger.critical("This is a critical message")
 
 
 if __name__ == "__main__":
+
+    bitmex_contracts = get_contracts()
+
     root = tk.Tk()
+
+    row_count, col_count = 0, 0
+
+    for contract in bitmex_contracts:
+        # label -> window, text
+        label_widget = tk.Label(root, text=contract)
+        # pack -> add to window
+        # grid -> add to window
+        label_widget.grid(row=row_count, column=col_count)
+
+        if row_count == 4:
+            col_count+=1
+            row_count = 0
+        else:
+            row_count+=1
+
     # Start event loop, it avoids the termination of program
     root.mainloop()
