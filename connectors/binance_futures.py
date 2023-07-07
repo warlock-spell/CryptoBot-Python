@@ -6,6 +6,9 @@
 
 import logging
 import requests
+import time
+import hmac
+import hashlib
 
 logger = logging.getLogger()
 
@@ -14,14 +17,30 @@ BINANCE_BASE_URL = "https://fapi.binance.com"
 
 
 class BinanceFuturesClient:
-    def __init__(self, testnet=True):
+    def __init__(self, public_key, secret_key, testnet=True):
         self.base_url = TESTNET_BINANCE_BASE_URL if testnet else BINANCE_BASE_URL
         self.prices = {}  # key: contract_name, value: {bid: 0, ask: 0}
+        self.public_key = public_key
+        self.secret_key = secret_key
+
+        self.headers = {'X-MBX-APIKEY': self.public_key}
+
         logger.info("Binance Futures Client Initialised")
+
+    def generate_signature(self, data):
+        # generate signature from data and secret key to be sent in header
+        query_string = '&'.join([f"{d}={data[d]}" for d in data])
+        # encode it to bytes using UTF-8
+        # another way to do same is: urlencode(data).encode('utf-8')
+        return hmac.new(self.secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
 
     def make_request(self, method, endpoint, data):
         if method == "GET":
-            response = requests.get(f"{self.base_url}{endpoint}", params=data)
+            response = requests.get(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+        elif method == "POST":
+            response = requests.post(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+        elif method == "DELETE":
+            response = requests.delete(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
         else:
             raise ValueError
 
@@ -81,3 +100,65 @@ class BinanceFuturesClient:
                     'ignore': float(candle_data[11])
                 })
         return candles
+
+    def get_balance(self):
+        data = {}
+        data['timestamp'] = int(time.time() * 1000)  # LONG format required, therefore int()
+        data['signature'] = self.generate_signature(data)
+
+        balances = {}
+
+        account_data = self.make_request("GET", "/fapi/v1/account", data)
+
+        if account_data is not None:
+            for a in account_data['assets']:
+                balances[a['asset']] = a
+
+        return balances
+
+    def place_order(self, symbol, side, quantity, order_type, price=None, time_in_force=None):
+        # Symbol, side & type are mandatory
+        # quantity and timestamp are mandatory
+        # timeInForce, price, newClientOrderId, stopPrice, recvWindow are optional
+        data = {}
+        data['symbol'] = symbol
+        data['side'] = side
+        data['quantity'] = quantity
+        data['type'] = order_type
+
+        if price is not None:
+            data['price'] = price
+
+        if time_in_force is not None:
+            data['timeInForce'] = time_in_force
+
+        data['timestamp'] = int(time.time() * 1000)
+        data['signature'] = self.generate_signature(data)
+
+        order_status = self.make_request("POST", "/fapi/v1/order", data)
+
+        return order_status
+
+    def cancel_order(self, symbol, order_id):
+        # Binance may send "order does not exist" when market fluctuates a lot
+        # GET /fapi/v1/order will work anyway
+        data = {}
+        data['symbol'] = symbol
+        data['orderId'] = order_id
+        data['timestamp'] = int(time.time() * 1000)
+        data['signature'] = self.generate_signature(data)
+
+        order_status = self.make_request("DELETE", "/fapi/v1/order", data)
+
+        return order_status
+
+    def get_order_status(self, symbol, order_id):
+        data = {}
+        data['timestamp'] = int(time.time() * 1000)
+        data['symbol'] = symbol
+        data['orderId'] = order_id
+        data['signature'] = self.generate_signature(data)
+
+        order_status = self.make_request("GET", "/fapi/v1/order", data)
+
+        return order_status
