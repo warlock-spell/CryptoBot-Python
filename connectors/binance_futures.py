@@ -13,6 +13,8 @@ import websocket
 import threading
 import json
 
+from models import Balance
+
 logger = logging.getLogger()
 
 TESTNET_BINANCE_BASE_URL = "https://testnet.binancefuture.com"
@@ -123,7 +125,7 @@ class BinanceFuturesClient:
 
         if account_data is not None:
             for a in account_data['assets']:
-                balances[a['asset']] = a
+                balances[a['asset']] = Balance(a)
 
         return balances
 
