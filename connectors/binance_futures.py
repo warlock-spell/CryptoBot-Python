@@ -13,7 +13,7 @@ import websocket
 import threading
 import json
 
-from models import Balance
+from models import Balance, Candle
 
 logger = logging.getLogger()
 
@@ -98,20 +98,8 @@ class BinanceFuturesClient:
         candles = []
         if raw_candle_data is not None:
             for candle_data in raw_candle_data:
-                candles.append({
-                    'open_time': candle_data[0],
-                    'open': float(candle_data[1]),
-                    'high': float(candle_data[2]),
-                    'low': float(candle_data[3]),
-                    'close': float(candle_data[4]),
-                    'volume': float(candle_data[5]),
-                    'close_time': candle_data[6],
-                    'quote_asset_volume': float(candle_data[7]),
-                    'number_of_trades': candle_data[8],
-                    'taker_buy_base_asset_volume': float(candle_data[9]),
-                    'taker_buy_quote_asset_volume': float(candle_data[10]),
-                    'ignore': float(candle_data[11])
-                })
+                candles.append(Candle(candle_data))
+
         return candles
 
     def get_balance(self):
