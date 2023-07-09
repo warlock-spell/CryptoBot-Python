@@ -9,21 +9,32 @@ import requests
 import time
 import hmac
 import hashlib
+import websocket
+import threading
+import json
 
 logger = logging.getLogger()
 
 TESTNET_BINANCE_BASE_URL = "https://testnet.binancefuture.com"
 BINANCE_BASE_URL = "https://fapi.binance.com"
+TESTNET_BINANCE_FUTURES_STREAM_URL = "wss://stream.binancefuture.com/ws"
+BINANCE_FUTURES_STREAM_URL = "wss://fstream.binance.com/ws"
 
 
 class BinanceFuturesClient:
     def __init__(self, public_key, secret_key, testnet=True):
         self.base_url = TESTNET_BINANCE_BASE_URL if testnet else BINANCE_BASE_URL
+        self.stream_url = TESTNET_BINANCE_FUTURES_STREAM_URL if testnet else BINANCE_FUTURES_STREAM_URL
         self.prices = {}  # key: contract_name, value: {bid: 0, ask: 0}
         self.public_key = public_key
         self.secret_key = secret_key
+        self.id = 1
+        self.ws = None
 
         self.headers = {'X-MBX-APIKEY': self.public_key}
+
+        t = threading.Thread(target=self.start_websocket)
+        t.start()
 
         logger.info("Binance Futures Client Initialised")
 
@@ -162,3 +173,51 @@ class BinanceFuturesClient:
         order_status = self.make_request("GET", "/fapi/v1/order", data)
 
         return order_status
+
+    def start_websocket(self):
+        self.ws = websocket.WebSocketApp(self.stream_url,
+                                    on_open=self.on_open,
+                                    on_close=self.on_close,
+                                    on_error=self.on_error,
+                                    on_message=self.on_message)
+
+        self.ws.run_forever()
+
+
+    def on_open(self, ws):
+        logger.info("Websocket connection opened for Binance")
+        # Subscribe to symbol when connection is established
+        self.subscribe_channel("BTCUSDT")
+
+    def on_close(self, ws):
+        logger.warning("Websocket connection closed for Binance")
+
+    def on_error(self, ws, error):
+        logger.error(f"Error received {error}")
+
+    def on_message(self, ws, message):
+        # convert received message from string to dict
+        data = json.loads(message)
+
+        if "e" in data:
+            if data["e"] == "bookTicker":
+                symbol = data['s']
+                if symbol not in self.prices:
+                    self.prices[symbol] = {'bid': float(data['b']),
+                                           'ask': float(data['a'])}
+                else:
+                    self.prices[symbol]['bid'] = float(data['b'])
+                    self.prices[symbol]['ask'] = float(data['a'])
+
+                print(self.prices[symbol])
+
+    def subscribe_channel(self, symbol):
+        data = {}
+        data['method'] = "SUBSCRIBE"
+        data['params'] = []
+        data['params'].append(f"{symbol.lower()}@bookTicker")
+        data['id'] = self.id
+
+        self.id += 1
+        # convert from dict to string and send
+        self.ws.send(json.dumps(data))

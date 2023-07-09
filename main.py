@@ -8,6 +8,14 @@ import tkinter as tk
 import logging
 from connectors.binance_futures import BinanceFuturesClient
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+BINANCE_TESTNET_PUBLIC_KEY = os.environ.get("BINANCE_TESTNET_PUBLIC_KEY")
+BINANCE_TESTNET_SECRET_KEY = os.environ.get("BINANCE_TESTNET_SECRET_KEY")
+
 logger = logging.getLogger()
 
 logger.setLevel(logging.INFO)
@@ -26,28 +34,11 @@ logger.addHandler(file_handler)
 
 if __name__ == "__main__":
 
-    binance_client = BinanceFuturesClient(testnet=True)
+
+    binance_client = BinanceFuturesClient(public_key=BINANCE_TESTNET_PUBLIC_KEY, secret_key=BINANCE_TESTNET_SECRET_KEY,
+                                          testnet=True)
 
     root = tk.Tk()
 
-    APP_BACKGROUND = 'gray12'
-    CONTRACTS_FOREGROUND = 'SteelBlue1'
-
-    root.configure(bg=APP_BACKGROUND)
-
-    calibri_font = ("Calibri", 12, "normal")
-
-    row_count, col_count = 0, 0
-
-    for contract in binance_client.get_contract():
-        label_widget = tk.Label(root, text=contract, bg=APP_BACKGROUND, fg=CONTRACTS_FOREGROUND, width=14, font=calibri_font)
-        label_widget.grid(row=row_count, column=col_count,
-                          sticky="ew")  # sticky="ew" makes the widget expand horizontally
-
-        if row_count == 4:
-            col_count += 1
-            row_count = 0
-        else:
-            row_count += 1
 
     root.mainloop()
