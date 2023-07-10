@@ -13,7 +13,7 @@ import websocket
 import threading
 import json
 
-from models import Balance, Candle
+from models import Balance, Candle, Contract
 
 logger = logging.getLogger()
 
@@ -32,6 +32,9 @@ class BinanceFuturesClient:
         self.secret_key = secret_key
         self.id = 1
         self.ws = None
+
+        self.contracts = self.get_contract()
+        self.balances = self.get_balances()
 
         self.headers = {'X-MBX-APIKEY': self.public_key}
 
@@ -74,7 +77,7 @@ class BinanceFuturesClient:
         contracts = {}
         if exchange_info is not None:
             for contract_data in exchange_info['symbols']:
-                contracts[contract_data['pair']] = contract_data
+                contracts[contract_data['pair']] = Contract(contract_data)
 
         return contracts
 
@@ -102,7 +105,7 @@ class BinanceFuturesClient:
 
         return candles
 
-    def get_balance(self):
+    def get_balances(self):
         data = {}
         data['timestamp'] = int(time.time() * 1000)  # LONG format required, therefore int()
         data['signature'] = self.generate_signature(data)
