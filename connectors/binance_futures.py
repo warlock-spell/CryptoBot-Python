@@ -13,7 +13,7 @@ import websocket
 import threading
 import json
 
-from models import Balance, Candle, Contract
+from models import Balance, Candle, Contract, OrderStatus
 
 logger = logging.getLogger()
 
@@ -141,6 +141,9 @@ class BinanceFuturesClient:
 
         order_status = self.make_request("POST", "/fapi/v1/order", data)
 
+        if order_status is None:
+            order_status = OrderStatus(order_status)
+
         return order_status
 
     def cancel_order(self, symbol, order_id):
@@ -154,6 +157,9 @@ class BinanceFuturesClient:
 
         order_status = self.make_request("DELETE", "/fapi/v1/order", data)
 
+        if order_status is None:
+            order_status = OrderStatus(order_status)
+
         return order_status
 
     def get_order_status(self, symbol, order_id):
@@ -164,6 +170,9 @@ class BinanceFuturesClient:
         data['signature'] = self.generate_signature(data)
 
         order_status = self.make_request("GET", "/fapi/v1/order", data)
+
+        if order_status is None:
+            order_status = OrderStatus(order_status)
 
         return order_status
 
