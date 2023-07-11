@@ -209,7 +209,7 @@ class BinanceFuturesClient:
     def _on_open(self, ws):
         logger.info("Websocket connection opened for Binance")
         # Subscribe to symbol when connection is established
-        self.subscribe_channel(self.contracts['BTCUSDT'])
+        self.subscribe_channel(list(self.contracts.values()), "bookTicker")
 
     def _on_close(self, ws):
         logger.warning("Websocket connection closed for Binance")
@@ -233,17 +233,19 @@ class BinanceFuturesClient:
 
                 print(self.prices[symbol])
 
-    def subscribe_channel(self, contract: Contract):
+    def subscribe_channel(self, contracts: typing.List[Contract], channel: str):
+        # To subscribe a single stream of all symbols, use !bookTicker and don't send a symbol parameter
         data = {}
         data['method'] = "SUBSCRIBE"
         data['params'] = []
-        data['params'].append(f"{contract.symbol.lower()}@bookTicker")
+        for contract in contracts:
+            data['params'].append(f"{contract.symbol.lower()}@{channel}")
         data['id'] = self._websocket_id
 
         # convert from dict to string and send
         try:
             self._ws.send(json.dumps(data))
         except Exception as e:
-            logger.error(f"Websocket error while subscribing to {contract.symbol}: {e}")
+            logger.error(f"Websocket error while subscribing to {len(contracts)}, {channel}: {e}")
 
         self._websocket_id += 1
