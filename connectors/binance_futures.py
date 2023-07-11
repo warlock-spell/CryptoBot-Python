@@ -31,7 +31,7 @@ class BinanceFuturesClient:
         self.prices = {}  # key: contract_name, value: {bid: 0, ask: 0}
         self.public_key = public_key
         self.secret_key = secret_key
-        self.id = 1
+        self.websocket_id = 1
         self.ws = None
 
         self.contracts = self.get_contract()
@@ -52,12 +52,27 @@ class BinanceFuturesClient:
         return hmac.new(self.secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
 
     def make_request(self, method: str, endpoint: str, data: typing.Dict):
+
         if method == "GET":
-            response = requests.get(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+            try:
+                response = requests.get(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+            except Exception as e:
+                logger.error(f"Connection error while making {method} request to {endpoint}: {e}")
+                return None
+
         elif method == "POST":
-            response = requests.post(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+            try:
+                response = requests.post(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+            except Exception as e:
+                logger.error(f"Connection error while making {method} request to {endpoint}: {e}")
+                return None
+
         elif method == "DELETE":
-            response = requests.delete(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+            try:
+                response = requests.delete(f"{self.base_url}{endpoint}", params=data, headers=self.headers)
+            except Exception as e:
+                logger.error(f"Connection error while making {method} request to {endpoint}: {e}")
+                return None
         else:
             raise ValueError
 
@@ -219,8 +234,12 @@ class BinanceFuturesClient:
         data['method'] = "SUBSCRIBE"
         data['params'] = []
         data['params'].append(f"{contract.symbol.lower()}@bookTicker")
-        data['id'] = self.id
+        data['id'] = self.websocket_id
 
-        self.id += 1
         # convert from dict to string and send
-        self.ws.send(json.dumps(data))
+        try:
+            self.ws.send(json.dumps(data))
+        except Exception as e:
+            logger.error(f"Websocket error while subscribing to {contract.symbol}: {e}")
+
+        self.websocket_id += 1
