@@ -199,8 +199,12 @@ class BinanceFuturesClient:
                                          on_close=self.on_close,
                                          on_error=self.on_error,
                                          on_message=self.on_message)
-
-        self.ws.run_forever()
+        while True: # reconnect on disconnect after 3 seconds
+            try:
+                self.ws.run_forever()
+            except Exception as e:
+                logger.error(f"Binance error in websocket run_forever() method: {e}")
+            time.sleep(3)
 
     def on_open(self, ws):
         logger.info("Websocket connection opened for Binance")
