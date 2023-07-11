@@ -13,6 +13,7 @@ import websocket
 import threading
 import json
 import typing
+from urllib.parse import urlencode
 
 from models import Balance, Candle, Contract, OrderStatus
 
@@ -34,7 +35,7 @@ class BinanceFuturesClient:
         self._websocket_id = 1
         self._ws = None
 
-        self.contracts = self.get_contract()
+        self.contracts = self.get_contracts()
         self.balances = self.get_balances()
 
         self._headers = {'X-MBX-APIKEY': self._public_key}
@@ -46,16 +47,18 @@ class BinanceFuturesClient:
 
     def _generate_signature(self, data: typing.Dict) -> str:
         # generate signature from data and secret key to be sent in header
-        query_string = '&'.join([f"{d}={data[d]}" for d in data])
+        # query_string = '&'.join([f"{d}={data[d]}" for d in data])
         # encode it to bytes using UTF-8
-        # another way to do same is: urlencode(data).encode('utf-8')
-        return hmac.new(self._secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
+        # another way to do same is: query_string.encode('utf-8')
+        return hmac.new(self._secret_key.encode('utf-8'), urlencode(data).encode('utf-8'), hashlib.sha256).hexdigest()
 
     def _make_request(self, method: str, endpoint: str, data: typing.Dict):
 
+        self._headers = {'X-MBX-APIKEY': self._public_key}
+
         if method == "GET":
             try:
-                response = requests.get(f"{self._base_url}{endpoint}", params=data, headers=self._headers)
+                response = requests.get(self._base_url + endpoint, params=data, headers=self._headers)
             except Exception as e:
                 logger.error(f"Connection error while making {method} request to {endpoint}: {e}")
                 return None
@@ -88,7 +91,7 @@ class BinanceFuturesClient:
 
             return None
 
-    def get_contract(self) -> typing.Dict[str, Contract]:
+    def get_contracts(self) -> typing.Dict[str, Contract]:
         exchange_info = self._make_request("GET", "/fapi/v1/exchangeInfo", dict())
         contracts = {}
         if exchange_info is not None:
@@ -195,11 +198,11 @@ class BinanceFuturesClient:
 
     def _start_websocket(self):
         self._ws = websocket.WebSocketApp(self._stream_url,
-                                         on_open=self._on_open,
-                                         on_close=self._on_close,
-                                         on_error=self._on_error,
-                                         on_message=self._on_message)
-        while True: # reconnect on disconnect after 3 seconds
+                                          on_open=self._on_open,
+                                          on_close=self._on_close,
+                                          on_error=self._on_error,
+                                          on_message=self._on_message)
+        while True:  # reconnect on disconnect after 3 seconds
             try:
                 self._ws.run_forever()
             except Exception as e:
