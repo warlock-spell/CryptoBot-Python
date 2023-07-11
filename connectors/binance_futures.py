@@ -93,7 +93,7 @@ class BinanceFuturesClient:
 
     def get_contracts(self) -> typing.Dict[str, Contract]:
         exchange_info = self._make_request("GET", "/fapi/v1/exchangeInfo", dict())
-        contracts = {}
+        contracts = dict()
         if exchange_info is not None:
             for contract_data in exchange_info['symbols']:
                 contracts[contract_data['pair']] = Contract(contract_data)
@@ -207,12 +207,14 @@ class BinanceFuturesClient:
                 self._ws.run_forever()
             except Exception as e:
                 logger.error(f"Binance error in websocket run_forever() method: {e}")
-            time.sleep(3)
+            time.sleep(2)
 
     def _on_open(self, ws):
         logger.info("Websocket connection opened for Binance")
+
         # Subscribe to symbol when connection is established
-        self.subscribe_channel(list(self.contracts.values()), "bookTicker")
+        # self.subscribe_channel_stream(list(self.contracts.values()), "bookTicker")
+        self.subscribe_channel("BTCUSDT", "bookTicker")
 
     def _on_close(self, ws):
         logger.warning("Websocket connection closed for Binance")
@@ -236,19 +238,33 @@ class BinanceFuturesClient:
 
                 print(self.prices[symbol])
 
-    def subscribe_channel(self, contracts: typing.List[Contract], channel: str):
+    def subscribe_channel_stream(self, contracts: typing.List[Contract], channel: str):
         # To subscribe a single stream of all symbols, use !bookTicker and don't send a symbol parameter
-        data = {}
+        data = dict()
         data['method'] = "SUBSCRIBE"
         data['params'] = []
+
         for contract in contracts:
-            data['params'].append(f"{contract.symbol.lower()}@{channel}")
+            data['params'].append(contract.symbol.lower() + "@" + channel)
         data['id'] = self._websocket_id
 
+        # print(data)
         # convert from dict to string and send
         try:
             self._ws.send(json.dumps(data))
         except Exception as e:
-            logger.error(f"Websocket error while subscribing to {len(contracts)}, {channel}: {e}")
+            logger.error("Websocket error while subscribing to %s %s updates: %s", len(contracts), channel, e)
+
+        self._websocket_id += 1
+
+    def subscribe_channel(self, symbol: str, channel: str):
+        data = dict()
+        data['method'] = "SUBSCRIBE"
+        data['params'] = []
+        data['params'].append(symbol.lower() + f"@{channel}")
+        data['id'] = self._websocket_id
+
+        self._ws.send(json.dumps(data))
+        print(data)
 
         self._websocket_id += 1
