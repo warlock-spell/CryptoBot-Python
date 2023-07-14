@@ -191,19 +191,19 @@ class BitmexClient:
             try:
                 self._ws.run_forever()
             except Exception as e:
-                logger.error("Bitmex error in run_forever() method: %s", e)
+                logger.error(f"Bitmex error in websocket run_forever() method: {e}")
             time.sleep(2)
 
     def _on_open(self, ws):
-        logger.info("Bitmex connection opened")
+        logger.info("Websocket connection opened for Bitmex")
 
         self.subscribe_channel("instrument")
 
     def _on_close(self, ws):
-        logger.warning("Bitmex Websocket connection closed")
+        logger.warning("Websocket connection closed for Bitmex")
 
-    def _on_error(self, ws, msg: str):
-        logger.error("Bitmex connection error: %s", msg)
+    def _on_error(self, ws, error: str):
+        logger.error(f"Error received on Bitmex: {error}")
 
     def _on_message(self, ws, msg: str):
 
@@ -235,4 +235,4 @@ class BitmexClient:
         try:
             self._ws.send(json.dumps(data))
         except Exception as e:
-            logger.error("Websocket error while subscribing to %s updates: %s", topic, e)
+            logger.error(f"Websocket error while subscribing to {topic} updates: {e}")

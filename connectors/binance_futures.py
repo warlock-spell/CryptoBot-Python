@@ -220,7 +220,7 @@ class BinanceFuturesClient:
         logger.warning("Websocket connection closed for Binance")
 
     def _on_error(self, ws, error: str):
-        logger.error(f"Error received {error}")
+        logger.error(f"Error received on Binance: {error}")
 
     def _on_message(self, ws, message: str):
         # convert received message from string to dict
@@ -265,6 +265,6 @@ class BinanceFuturesClient:
         data['id'] = self._websocket_id
 
         self._ws.send(json.dumps(data))
-        print(data)
+        # print(data)
 
         self._websocket_id += 1
