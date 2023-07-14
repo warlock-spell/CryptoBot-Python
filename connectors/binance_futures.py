@@ -40,10 +40,16 @@ class BinanceFuturesClient:
 
         self._headers = {'X-MBX-APIKEY': self._public_key}
 
+        self.logs = []
+
         t = threading.Thread(target=self._start_websocket)
         t.start()
 
         logger.info("Binance Futures Client Initialised")
+
+    def _add_log(self, msg: str):
+        logger.info(msg)
+        self.logs.append({"log": msg, "displayed": False})
 
     def _generate_signature(self, data: typing.Dict) -> str:
         # generate signature from data and secret key to be sent in header

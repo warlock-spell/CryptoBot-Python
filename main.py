@@ -44,6 +44,6 @@ if __name__ == "__main__":
     bitmex_client = BitmexClient(public_key=BITMEX_TESTNET_PUBLIC_KEY, secret_key=BITMEX_TESTNET_SECRET_KEY,
                                  testnet=True)
 
-    root = Root()
+    root = Root(binance_client, bitmex_client) # To access logs from these clients
 
     root.mainloop()
