@@ -5,6 +5,8 @@
 # @Time:        14-07-2023 03:49 pm
 
 import tkinter as tk
+from datetime import datetime
+
 import components.styles as st
 
 
@@ -28,7 +30,7 @@ class Logging(tk.Frame):
         self.logging_text.configure(state=tk.NORMAL)
 
         # Add the message
-        self.logging_text.insert("1.0", message + "\n") # 1.0 means line 1, character 0
+        self.logging_text.insert("1.0", datetime.now().strftime("%a %H:%M:%S ::") + message + "\n")  # 1.0 means line 1, character 0
 
         # Lock it again after adding the message
         self.logging_text.configure(state=tk.DISABLED)

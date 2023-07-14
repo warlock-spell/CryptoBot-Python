@@ -5,6 +5,8 @@
 # @Time:        14-07-2023 03:25 pm
 
 import tkinter as tk
+import time
+
 import components.styles as st
 from components.logging_component import Logging
 
@@ -29,3 +31,4 @@ class Root(tk.Tk):
 
         for i in range(10):
             self._logging_frame.add_log(f"Test Message {i}")
+            time.sleep(3)
