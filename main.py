@@ -6,10 +6,13 @@
 
 import tkinter as tk
 import logging
+import os
+from dotenv import load_dotenv
+
+from components.root_component import Root
+
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.bitmex import BitmexClient
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -35,15 +38,12 @@ logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
 
 if __name__ == "__main__":
+    binance_client = BinanceFuturesClient(public_key=BINANCE_TESTNET_PUBLIC_KEY, secret_key=BINANCE_TESTNET_SECRET_KEY,
+                                          testnet=True)
 
+    bitmex_client = BitmexClient(public_key=BITMEX_TESTNET_PUBLIC_KEY, secret_key=BITMEX_TESTNET_SECRET_KEY,
+                                 testnet=True)
 
-    binance_client = BinanceFuturesClient(public_key=BINANCE_TESTNET_PUBLIC_KEY, secret_key=BINANCE_TESTNET_SECRET_KEY, testnet=True)
-
-    bitmex_client = BitmexClient(public_key=BITMEX_TESTNET_PUBLIC_KEY, secret_key=BITMEX_TESTNET_SECRET_KEY, testnet=True)
-
-
-
-    root = tk.Tk()
-
+    root = Root()
 
     root.mainloop()
