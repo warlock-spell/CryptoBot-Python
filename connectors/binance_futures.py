@@ -15,7 +15,7 @@ import json
 import typing
 from urllib.parse import urlencode
 
-from models import Balance, Candle, Contract, OrderStatus
+from connectors.models import Balance, Candle, Contract, OrderStatus
 
 logger = logging.getLogger()
 
@@ -96,7 +96,7 @@ class BinanceFuturesClient:
         contracts = dict()
         if exchange_info is not None:
             for contract_data in exchange_info['symbols']:
-                contracts[contract_data['pair']] = Contract(contract_data)
+                contracts[contract_data['pair']] = Contract(contract_data, "binance")
 
         return contracts
 
@@ -120,7 +120,7 @@ class BinanceFuturesClient:
         candles = []
         if raw_candle_data is not None:
             for candle_data in raw_candle_data:
-                candles.append(Candle(candle_data))
+                candles.append(Candle(candle_data, interval, "binance"))
 
         return candles
 
@@ -135,7 +135,7 @@ class BinanceFuturesClient:
 
         if account_data is not None:
             for a in account_data['assets']:
-                balances[a['asset']] = Balance(a)
+                balances[a['asset']] = Balance(a, "binance")
 
         return balances
 
@@ -147,11 +147,11 @@ class BinanceFuturesClient:
         data = {}
         data['symbol'] = contract.symbol
         data['side'] = side
-        data['quantity'] = quantity
+        data['quantity'] = round(round(quantity / contract.lot_size) * contract.lot_size, 8)
         data['type'] = order_type
 
         if price is not None:
-            data['price'] = price
+            data['price'] = round(round(price / contract.tick_size) * contract.tick_size, 8)
 
         if time_in_force is not None:
             data['timeInForce'] = time_in_force
@@ -162,7 +162,7 @@ class BinanceFuturesClient:
         order_status = self._make_request("POST", "/fapi/v1/order", data)
 
         if order_status is None:
-            order_status = OrderStatus(order_status)
+            order_status = OrderStatus(order_status, "binance")
 
         return order_status
 
@@ -178,7 +178,7 @@ class BinanceFuturesClient:
         order_status = self._make_request("DELETE", "/fapi/v1/order", data)
 
         if order_status is None:
-            order_status = OrderStatus(order_status)
+            order_status = OrderStatus(order_status, "binance")
 
         return order_status
 
@@ -192,7 +192,7 @@ class BinanceFuturesClient:
         order_status = self._make_request("GET", "/fapi/v1/order", data)
 
         if order_status is None:
-            order_status = OrderStatus(order_status)
+            order_status = OrderStatus(order_status, "binance")
 
         return order_status
 
@@ -236,7 +236,7 @@ class BinanceFuturesClient:
                     self.prices[symbol]['bid'] = float(data['b'])
                     self.prices[symbol]['ask'] = float(data['a'])
 
-                print(self.prices[symbol])
+                # print(self.prices[symbol])
 
     def subscribe_channel_stream(self, contracts: typing.List[Contract], channel: str):
         # To subscribe a single stream of all symbols, use !bookTicker and don't send a symbol parameter
