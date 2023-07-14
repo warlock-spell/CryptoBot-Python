@@ -6,3 +6,8 @@
 
 BG_COLOR_1 = "gray12"
 BG_COLOR_2 = "white"
+
+FG_COLOR_1 = "white"
+FG_COLOR_2 = "SteelBlue1"
+
+GLOBAL_FONT = ("Calibri", 12, "normal")
