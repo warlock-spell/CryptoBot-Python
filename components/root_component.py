@@ -17,8 +17,8 @@ class Root(tk.Tk):
     def __init__(self, binance: BinanceFuturesClient, bitmex: BitmexClient):
         super().__init__()
 
-        self._binance = binance
-        self._bitmex = bitmex
+        self.binance = binance
+        self.bitmex = bitmex
 
         self.title("Crypto Bot")
         self.configure(bg=st.BG_COLOR_1)
@@ -32,7 +32,7 @@ class Root(tk.Tk):
         self._right_frame = tk.Frame(self, bg=st.BG_COLOR_1)
         self._right_frame.pack(side=tk.LEFT)
 
-        self._watchlist_frame = Watchlist(self._left_frame, bg=st.BG_COLOR_1)
+        self._watchlist_frame = Watchlist(self.binance.contracts, self.bitmex.contracts,self._left_frame, bg=st.BG_COLOR_1)
         self._watchlist_frame.pack(side=tk.TOP)
 
         self._logging_frame = Logging(self._left_frame, bg=st.BG_COLOR_1)
@@ -42,12 +42,12 @@ class Root(tk.Tk):
 
     def _update_ui(self):
         # log is a dictionary with 2 keys: log and displayed
-        for log in self._binance.logs:
+        for log in self.binance.logs:
             if not log['displayed']:
                 self._logging_frame.add_log(log['log'])
                 log['displayed'] = True
 
-        for log in self._bitmex.logs:
+        for log in self.bitmex.logs:
             if not log['displayed']:
                 self._logging_frame.add_log(log['log'])
                 log['displayed'] = True

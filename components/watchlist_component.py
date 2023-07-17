@@ -5,13 +5,23 @@
 # @Time:        14-07-2023 04:44 pm
 
 import tkinter as tk
+import typing
 
 import components.styles as st
+from connectors.models import Contract
 
 
 class Watchlist(tk.Frame):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, binance_contracts: typing.Dict[str, Contract], bitmex_contracts: typing.Dict[str, Contract],
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.binance_symbols = list(binance_contracts.keys())
+        self.bitmex_symbols = list(bitmex_contracts.keys())
+
+        # print(self.binance_symbols)
+        # print("/n")
+        # print(self.bitmex_symbols)
 
         self._commands_frame = tk.Frame(self, bg=st.BG_COLOR_1)
         self._commands_frame.pack(side=tk.TOP)
@@ -31,18 +41,88 @@ class Watchlist(tk.Frame):
                                        justify=tk.CENTER,
                                        insertbackground=st.FG_COLOR_1,
                                        bg=st.BG_COLOR_2)
+        self._binance_entry.bind("<Return>", self._add_binance_symbol)  # Bind the return key to the entry
         self._binance_entry.grid(row=1, column=0)
 
         self._bitmex_label = tk.Label(self._commands_frame,
-                                       text="Bitmex",
-                                       bg=st.BG_COLOR_1,
-                                       fg=st.FG_COLOR_1,
-                                       font=st.BOLD_FONT)
+                                      text="Bitmex",
+                                      bg=st.BG_COLOR_1,
+                                      fg=st.FG_COLOR_1,
+                                      font=st.BOLD_FONT)
         self._bitmex_label.grid(row=0, column=1)
 
         self._bitmex_entry = tk.Entry(self._commands_frame,
                                       fg=st.FG_COLOR_1,
                                       justify=tk.CENTER,
                                       insertbackground=st.FG_COLOR_1,
-                                       bg=st.BG_COLOR_2)
+                                      bg=st.BG_COLOR_2)
+        self._bitmex_entry.bind("<Return>", self._add_bitmax_symbol)
         self._bitmex_entry.grid(row=1, column=1)
+
+        self.body_widgets = dict()
+
+        self._headers = ["symbol", "exchange", "bid", "ask"]
+
+        for index, val in enumerate(self._headers):
+            header = tk.Label(self._table_frame,
+                              text=val.capitalize(),
+                              bg=st.BG_COLOR_1,
+                              fg=st.FG_COLOR_1,
+                              font=st.BOLD_FONT)
+            header.grid(row=0, column=index)
+
+        for val in self._headers:
+            self.body_widgets[val] = dict()
+            if val in ["bid", "ask"]:
+                self.body_widgets[f"{val}_var"] = dict() # create bid_var and ask_var
+
+        self._body_index = 1 # Start from 1 because 0 is the header
+
+    def _add_binance_symbol(self, event):
+        symbol = event.widget.get()
+
+        if symbol in self.binance_symbols:
+            self._add_symbol(symbol, "binance")
+            event.widget.delete(0, tk.END)  # Clear the entry
+
+    def _add_bitmax_symbol(self, event):
+        symbol = event.widget.get()
+
+        if symbol in self.bitmex_symbols:
+            self._add_symbol(symbol, "bitmex")
+            event.widget.delete(0, tk.END)  # Clear the entry
+
+    def _add_symbol(self, symbol: str, exchange: str):
+        b_index = self._body_index
+
+        self.body_widgets["symbol"][b_index] = tk.Label(self._table_frame,
+                                                        text=symbol,
+                                                        bg=st.BG_COLOR_1,
+                                                        fg=st.FG_COLOR_2,
+                                                        font=st.GLOBAL_FONT)
+        self.body_widgets["symbol"][b_index].grid(row=b_index, column=0)
+
+        self.body_widgets["exchange"][b_index] = tk.Label(self._table_frame,
+                                                          text=exchange,
+                                                          bg=st.BG_COLOR_1,
+                                                          fg=st.FG_COLOR_2,
+                                                          font=st.GLOBAL_FONT)
+        self.body_widgets["exchange"][b_index].grid(row=b_index, column=1)
+
+        self.body_widgets['bid_var'][b_index] = tk.StringVar()
+        self.body_widgets["bid"][b_index] = tk.Label(self._table_frame,
+                                                     textvariable=self.body_widgets['bid_var'][b_index],
+                                                     bg=st.BG_COLOR_1,
+                                                     fg=st.FG_COLOR_2,
+                                                     font=st.GLOBAL_FONT)
+        self.body_widgets["bid"][b_index].grid(row=b_index, column=2)
+
+        self.body_widgets['ask_var'][b_index] = tk.StringVar()
+        self.body_widgets["ask"][b_index] = tk.Label(self._table_frame,
+                                                     textvariable=self.body_widgets['ask_var'][b_index],
+                                                     bg=st.BG_COLOR_1,
+                                                     fg=st.FG_COLOR_2,
+                                                     font=st.GLOBAL_FONT)
+        self.body_widgets["ask"][b_index].grid(row=b_index, column=3)
+
+        self._body_index += 1
