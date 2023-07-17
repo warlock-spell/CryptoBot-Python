@@ -61,11 +61,11 @@ class Watchlist(tk.Frame):
 
         self.body_widgets = dict()
 
-        self._headers = ["symbol", "exchange", "bid", "ask"]
+        self._headers = ["symbol", "exchange", "bid", "ask", "remove"]
 
         for index, val in enumerate(self._headers):
             header = tk.Label(self._table_frame,
-                              text=val.capitalize(),
+                              text=val.capitalize() if val != "remove" else "",
                               bg=st.BG_COLOR_1,
                               fg=st.FG_COLOR_1,
                               font=st.BOLD_FONT)
@@ -74,9 +74,16 @@ class Watchlist(tk.Frame):
         for val in self._headers:
             self.body_widgets[val] = dict()
             if val in ["bid", "ask"]:
-                self.body_widgets[f"{val}_var"] = dict() # create bid_var and ask_var
+                self.body_widgets[f"{val}_var"] = dict()  # create bid_var and ask_var
 
-        self._body_index = 1 # Start from 1 because 0 is the header
+        self._body_index = 1  # Start from 1 because 0 is the header
+
+    def _remove_symbol(self, body_index: int):
+
+        for val in self._headers:
+            self.body_widgets[val][body_index].grid_forget()
+            del self.body_widgets[val][body_index]
+
 
     def _add_binance_symbol(self, event):
         symbol = event.widget.get()
@@ -124,5 +131,14 @@ class Watchlist(tk.Frame):
                                                      fg=st.FG_COLOR_2,
                                                      font=st.GLOBAL_FONT)
         self.body_widgets["ask"][b_index].grid(row=b_index, column=3)
+
+        self.body_widgets["remove"][b_index] = tk.Button(self._table_frame,
+                                                         text="X",  # X for cancel or remove
+                                                         bg=st.RED,
+                                                         fg=st.FG_COLOR_1,
+                                                         font=st.GLOBAL_FONT,
+                                                         # lambda to pass the index, and avoiding callback to trigger immediately
+                                                         command=lambda: self._remove_symbol(b_index))
+        self.body_widgets["remove"][b_index].grid(row=b_index, column=4)
 
         self._body_index += 1
