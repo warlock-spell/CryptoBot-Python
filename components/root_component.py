@@ -41,6 +41,9 @@ class Root(tk.Tk):
         self._update_ui()
 
     def _update_ui(self):
+
+        # Logs
+
         # log is a dictionary with 2 keys: log and displayed
         for log in self.binance.logs:
             if not log['displayed']:
@@ -51,5 +54,45 @@ class Root(tk.Tk):
             if not log['displayed']:
                 self._logging_frame.add_log(log['log'])
                 log['displayed'] = True
+
+
+        # Watchlist prices
+
+        for key, value in self._watchlist_frame.body_widgets['symbol'].items():
+            symbol = self._watchlist_frame.body_widgets['symbol'][key].cget("text") # Get the symbol from the label
+            exchange = self._watchlist_frame.body_widgets['exchange'][key].cget("text") # Get the exchange from the label
+            # print(symbol, exchange)
+
+            if exchange in ["Binance", "binance"]:
+                if symbol not in self.binance.contracts:
+                    # print(symbol, "not in contracts")
+                    continue
+                if symbol not in self.binance.prices:
+                    # print(f"Fetching bid ask for, {symbol}")
+                    self.binance.get_bid_ask(self.binance.contracts[symbol])
+                    continue
+
+                precision = self.binance.contracts[symbol].price_decimals
+                prices = self.binance.prices[symbol]
+
+            elif exchange in ["Bitmex", "bitmex"]:
+                if symbol not in self.bitmex.contracts:
+                    continue
+                if symbol not in self.bitmex.prices:
+                    continue
+
+                precision = self.bitmex.contracts[symbol].price_decimals
+                prices = self.bitmex.prices[symbol]
+
+            else:
+                continue
+
+            if prices['bid'] is not None:
+                price_str = f"{prices['bid']:.{precision}f}"
+                self._watchlist_frame.body_widgets['bid_var'][key].set(price_str)
+
+            if prices['ask'] is not None:
+                price_str = f"{prices['ask']:.{precision}f}"
+                self._watchlist_frame.body_widgets['ask_var'][key].set(price_str)
 
         self.after(1500, self._update_ui) # call this method again after 1500ms

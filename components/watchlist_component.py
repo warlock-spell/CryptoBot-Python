@@ -89,14 +89,14 @@ class Watchlist(tk.Frame):
         symbol = event.widget.get()
 
         if symbol in self.binance_symbols:
-            self._add_symbol(symbol, "binance")
+            self._add_symbol(symbol, "Binance")
             event.widget.delete(0, tk.END)  # Clear the entry
 
     def _add_bitmax_symbol(self, event):
         symbol = event.widget.get()
 
         if symbol in self.bitmex_symbols:
-            self._add_symbol(symbol, "bitmex")
+            self._add_symbol(symbol, "Bitmex")
             event.widget.delete(0, tk.END)  # Clear the entry
 
     def _add_symbol(self, symbol: str, exchange: str):
