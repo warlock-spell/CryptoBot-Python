@@ -5,12 +5,15 @@
 # @Time:        14-07-2023 03:25 pm
 
 import tkinter as tk
+import logging
 
 import components.styles as st
 from components.logging_component import Logging
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.bitmex import BitmexClient
 from components.watchlist_component import Watchlist
+
+logger = logging.getLogger()
 
 
 class Root(tk.Tk):
@@ -58,41 +61,50 @@ class Root(tk.Tk):
 
         # Watchlist prices
 
-        for key, value in self._watchlist_frame.body_widgets['symbol'].items():
-            symbol = self._watchlist_frame.body_widgets['symbol'][key].cget("text") # Get the symbol from the label
-            exchange = self._watchlist_frame.body_widgets['exchange'][key].cget("text") # Get the exchange from the label
-            # print(symbol, exchange)
+        try:
+            for key, value in self._watchlist_frame.body_widgets['symbol'].items():
+                symbol = self._watchlist_frame.body_widgets['symbol'][key].cget("text") # Get the symbol from the label
+                exchange = self._watchlist_frame.body_widgets['exchange'][key].cget("text") # Get the exchange from the label
+                # print(symbol, exchange)
 
-            if exchange in ["Binance", "binance"]:
-                if symbol not in self.binance.contracts:
-                    # print(symbol, "not in contracts")
+                if exchange in ["Binance", "binance"]:
+                    if symbol not in self.binance.contracts:
+                        # print(symbol, "not in contracts")
+                        continue
+                    if symbol not in self.binance.prices:
+                        # print(f"Fetching bid ask for, {symbol}")
+                        self.binance.get_bid_ask(self.binance.contracts[symbol])
+                        continue
+
+                    precision = self.binance.contracts[symbol].price_decimals
+                    prices = self.binance.prices[symbol]
+
+                elif exchange in ["Bitmex", "bitmex"]:
+                    if symbol not in self.bitmex.contracts:
+                        print("Not in contracts")
+                        continue
+                    if symbol not in self.bitmex.prices:
+                        print("Not in prices")
+                        continue
+
+                    precision = self.bitmex.contracts[symbol].price_decimals
+                    prices = self.bitmex.prices[symbol]
+
+                else:
                     continue
-                if symbol not in self.binance.prices:
-                    # print(f"Fetching bid ask for, {symbol}")
-                    self.binance.get_bid_ask(self.binance.contracts[symbol])
-                    continue
 
-                precision = self.binance.contracts[symbol].price_decimals
-                prices = self.binance.prices[symbol]
+                if prices['bid'] is not None:
+                    price_str = f"{prices['bid']:.{precision}f}"
+                    self._watchlist_frame.body_widgets['bid_var'][key].set(price_str)
 
-            elif exchange in ["Bitmex", "bitmex"]:
-                if symbol not in self.bitmex.contracts:
-                    continue
-                if symbol not in self.bitmex.prices:
-                    continue
+                if prices['ask'] is not None:
+                    price_str = f"{prices['ask']:.{precision}f}"
+                    self._watchlist_frame.body_widgets['ask_var'][key].set(price_str)
 
-                precision = self.bitmex.contracts[symbol].price_decimals
-                prices = self.bitmex.prices[symbol]
-
-            else:
-                continue
-
-            if prices['bid'] is not None:
-                price_str = f"{prices['bid']:.{precision}f}"
-                self._watchlist_frame.body_widgets['bid_var'][key].set(price_str)
-
-            if prices['ask'] is not None:
-                price_str = f"{prices['ask']:.{precision}f}"
-                self._watchlist_frame.body_widgets['ask_var'][key].set(price_str)
+        except RuntimeError as e:
+            # Errors might occur if the watchlist dict is updated while the loop is running
+            # for example, if a new symbol is added to the watchlist
+            # or if a symbol is removed from the watchlist
+            logger.error(f"error while iterating over watchlist dict: {RuntimeError}")
 
         self.after(1500, self._update_ui) # call this method again after 1500ms
