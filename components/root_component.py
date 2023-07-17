@@ -10,6 +10,7 @@ import components.styles as st
 from components.logging_component import Logging
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.bitmex import BitmexClient
+from components.watchlist_component import Watchlist
 
 
 class Root(tk.Tk):
@@ -29,7 +30,10 @@ class Root(tk.Tk):
         self._left_frame.pack(side=tk.LEFT)
 
         self._right_frame = tk.Frame(self, bg=st.BG_COLOR_1)
-        self._right_frame.pack(side=tk.RIGHT)
+        self._right_frame.pack(side=tk.LEFT)
+
+        self._watchlist_frame = Watchlist(self._left_frame, bg=st.BG_COLOR_1)
+        self._watchlist_frame.pack(side=tk.TOP)
 
         self._logging_frame = Logging(self._left_frame, bg=st.BG_COLOR_1)
         self._logging_frame.pack(side=tk.TOP)
