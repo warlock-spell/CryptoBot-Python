@@ -12,6 +12,7 @@ from components.logging_component import Logging
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.bitmex import BitmexClient
 from components.watchlist_component import Watchlist
+from components.trades_component import TradesWatch
 
 logger = logging.getLogger()
 
@@ -40,6 +41,9 @@ class Root(tk.Tk):
 
         self._logging_frame = Logging(self._left_frame, bg=st.BG_COLOR_1)
         self._logging_frame.pack(side=tk.TOP)
+
+        self._trades_frame = TradesWatch(self._right_frame, bg=st.BG_COLOR_1)
+        self._trades_frame.pack(side=tk.TOP)
 
         self._update_ui()
 
@@ -81,10 +85,10 @@ class Root(tk.Tk):
 
                 elif exchange in ["Bitmex", "bitmex"]:
                     if symbol not in self.bitmex.contracts:
-                        print("Not in contracts")
+                        # print("Not in contracts")
                         continue
                     if symbol not in self.bitmex.prices:
-                        print("Not in prices")
+                        # print("Not in prices")
                         continue
 
                     precision = self.bitmex.contracts[symbol].price_decimals
