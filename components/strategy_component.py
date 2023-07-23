@@ -139,7 +139,18 @@ class StrategyEditor(tk.Frame):
         self._body_index += 1
 
     def _show_popup(self, b_index: int):
-        return
+
+        x = self.body_widgets['parameters'][b_index].winfo_rootx()
+        y = self.body_widgets['parameters'][b_index].winfo_rooty()
+
+        self._popup_window = tk.Toplevel(self)
+        self._popup_window.wm_title("Parameters")
+
+        self._popup_window.config(bg=st.BG_COLOR_1)
+        self._popup_window.attributes('-topmost', 'true')
+
+        self._popup_window.geometry(f"+{x-80}+{y+30}")
+
 
     def _switch_strategy(self, b_index: int):
         return
