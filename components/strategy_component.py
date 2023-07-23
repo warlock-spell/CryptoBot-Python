@@ -129,7 +129,7 @@ class StrategyEditor(tk.Frame):
                                                                  text=base_param['text'],
                                                                  bg=base_param['bg'],
                                                                  fg=st.FG_COLOR_1,
-                                                                 command=lambda: base_param['command'](b_index))
+                                                                 command=lambda frozen_command = base_param['command']:frozen_command(b_index))
             else:
                 # do nothing
                 continue
@@ -145,4 +145,10 @@ class StrategyEditor(tk.Frame):
         return
 
     def _delete_row(self, b_index: int):
-        return
+
+        for element in self._base_params:
+            self.body_widgets[element['code_name']][b_index].grid_forget()
+
+            del self.body_widgets[element['code_name']][b_index]
+
+
