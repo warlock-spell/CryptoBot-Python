@@ -92,6 +92,17 @@ class StrategyEditor(tk.Frame):
              "command": self._delete_row},
         ]
 
+        self._extra_params = {
+            "Technical": [
+                {"code_name": "ema_fast", "name": "MACD Fast Length", "widget": tk.Entry, "data": int },
+                {"code_name": "ema_slow", "name": "MACD Slow Length", "widget": tk.Entry, "data": int },
+                {"code_name": "ema_signal", "name": "MACD Signal Length", "widget": tk.Entry, "data": int },
+            ],
+            "Breakout": [
+                {"code_name": "min_volume", "name": "Minimum Volume", "widget": tk.Entry, "data": float},
+            ]
+        }
+
         for index, val in enumerate(self._headers):
             header = tk.Label(self._table_frame,
                               text=val,
@@ -115,6 +126,7 @@ class StrategyEditor(tk.Frame):
             code_name = base_param['code_name']
             if base_param['widget'] == tk.OptionMenu:
                 self.body_widgets[code_name + "_var"][b_index] = tk.StringVar()
+                self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0]) # setting default values
                 self.body_widgets[code_name][b_index] = tk.OptionMenu(self._table_frame,
                                                                       self.body_widgets[code_name + "_var"][b_index],
                                                                       *base_param['values'], )
@@ -150,6 +162,33 @@ class StrategyEditor(tk.Frame):
         self._popup_window.attributes('-topmost', 'true')
 
         self._popup_window.geometry(f"+{x-80}+{y+30}")
+
+        strat_selected = self.body_widgets['strategy_type_var'][b_index].get()
+
+        row_no = 0
+
+        for param in self._extra_params[strat_selected]:
+            code_name = param['code_name']
+
+            temp_label = tk.Label(self._popup_window, bg=st.BG_COLOR_1, fg=st.FG_COLOR_1, text=param['name'], font=st.BOLD_FONT)
+            temp_label.grid(row=row_no, column=0)
+
+            if param['widget'] == tk.Entry:
+                temp_input = tk.Entry(self._popup_window, justify=tk.CENTER, bg=st.BG_COLOR_2, fg=st.FG_COLOR_1, insertbackground=st.FG_COLOR_1)
+            else:
+                # do nothing
+                continue
+
+            temp_input.grid(row=row_no, column=1)
+            row_no += 1
+
+        # Validation
+        validation_button = tk.Button(self._popup_window, text="Validate", bg=st.BG_COLOR_2, fg=st.FG_COLOR_1, command=lambda: self._validate_popup(b_index))
+        validation_button.grid(row=row_no, column=0, columnspan=2)
+
+
+    def _validate_popup(self, b_index: int):
+        return
 
 
     def _switch_strategy(self, b_index: int):
