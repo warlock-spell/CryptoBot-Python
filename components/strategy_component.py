@@ -36,6 +36,9 @@ class StrategyEditor(tk.Frame):
 
         self._headers = ["Strategy", "Contract", "Timeframe", "Balance %", "TP %", "SL %"]
 
+        self._additional_params = dict()
+        self._extra_input = dict()
+
         self._base_params = [
             {"code_name": "strategy_type",
              "widget": tk.OptionMenu,
@@ -94,12 +97,12 @@ class StrategyEditor(tk.Frame):
 
         self._extra_params = {
             "Technical": [
-                {"code_name": "ema_fast", "name": "MACD Fast Length", "widget": tk.Entry, "data": int },
-                {"code_name": "ema_slow", "name": "MACD Slow Length", "widget": tk.Entry, "data": int },
-                {"code_name": "ema_signal", "name": "MACD Signal Length", "widget": tk.Entry, "data": int },
+                {"code_name": "ema_fast", "name": "MACD Fast Length", "widget": tk.Entry, "data_type": int },
+                {"code_name": "ema_slow", "name": "MACD Slow Length", "widget": tk.Entry, "data_type": int },
+                {"code_name": "ema_signal", "name": "MACD Signal Length", "widget": tk.Entry, "data_type": int },
             ],
             "Breakout": [
-                {"code_name": "min_volume", "name": "Minimum Volume", "widget": tk.Entry, "data": float},
+                {"code_name": "min_volume", "name": "Minimum Volume", "widget": tk.Entry, "data_type": float},
             ]
         }
 
@@ -148,6 +151,13 @@ class StrategyEditor(tk.Frame):
 
             # place the widget
             self.body_widgets[code_name][b_index].grid(row=b_index, column=col)
+
+        self._additional_params[b_index] = dict()
+
+        for strategy, parameters in self._extra_params.items():
+            for param in parameters:
+                self._additional_params[b_index][param['code_name']] = None
+
         self._body_index += 1
 
     def _show_popup(self, b_index: int):
@@ -174,12 +184,18 @@ class StrategyEditor(tk.Frame):
             temp_label.grid(row=row_no, column=0)
 
             if param['widget'] == tk.Entry:
-                temp_input = tk.Entry(self._popup_window, justify=tk.CENTER, bg=st.BG_COLOR_2, fg=st.FG_COLOR_1, insertbackground=st.FG_COLOR_1)
+                self._extra_input[code_name] = tk.Entry(self._popup_window, justify=tk.CENTER, bg=st.BG_COLOR_2, fg=st.FG_COLOR_1, insertbackground=st.FG_COLOR_1)
+
+                # if parametric value is already set, then set the entry to that value
+                if self._additional_params[b_index][code_name] is not None:
+                    # set the entry to the value
+                    self._extra_input[code_name].insert(tk.END, str(self._additional_params[b_index][code_name]))
+
             else:
                 # do nothing
                 continue
 
-            temp_input.grid(row=row_no, column=1)
+            self._extra_input[code_name].grid(row=row_no, column=1)
             row_no += 1
 
         # Validation
@@ -188,7 +204,19 @@ class StrategyEditor(tk.Frame):
 
 
     def _validate_popup(self, b_index: int):
-        return
+
+        strat_selected = self.body_widgets['strategy_type_var'][b_index].get()
+
+        for param in self._extra_params[strat_selected]:
+            code_name = param['code_name']
+
+            if self._extra_input[code_name].get() == "":
+                self._additional_params[b_index][code_name] = None
+            else:
+                self._additional_params[b_index][code_name] = param['data_type'](self._extra_input[code_name].get()) # convert to the correct data type from string
+
+
+        self._popup_window.destroy() # destroy the popup window when validation is done
 
 
     def _switch_strategy(self, b_index: int):
