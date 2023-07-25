@@ -14,8 +14,10 @@ from connectors.bitmex import BitmexClient
 
 
 class StrategyEditor(tk.Frame):
-    def __init__(self, binance: BinanceFuturesClient, bitmex: BitmexClient, *args, **kwargs):
+    def __init__(self, root, binance: BinanceFuturesClient, bitmex: BitmexClient, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.root = root # to access the logger
 
         self._exchanges = {"Binance": binance, "Bitmex": bitmex}
 
@@ -228,7 +230,49 @@ class StrategyEditor(tk.Frame):
 
 
     def _switch_strategy(self, b_index: int):
-        return
+
+        for param in ["balance_pct", "take_profit", "stop_loss"]:
+            if self.body_widgets[param][b_index].get() == "":
+                self.root.logging_frame.add_log(f"Missing {param} parameter for strategy at row {b_index}")
+                return
+
+        strat_selected = self.body_widgets['strategy_type_var'][b_index].get()
+
+        for param in self._extra_params[strat_selected]:
+            if self._additional_params[b_index][param['code_name']] is None:
+                self.root.logging_frame.add_log(f"Missing {param['code_name']} parameter for strategy at row {b_index}")
+                return
+
+        # if all parameters are set, then switch the strategy
+        # save the current strategy
+        symbol = self.body_widgets['contract_var'][b_index].get().split("_")[0] # contract is in the format of "Symbol_Exchange"
+        exchange = self.body_widgets['contract_var'][b_index].get().split("_")[1]
+        timeframe = self.body_widgets['timeframe_var'][b_index].get()
+        balance_pct = float(self.body_widgets['balance_pct'][b_index].get()) # entry box value is always string
+        take_profit = float(self.body_widgets['take_profit'][b_index].get())
+        stop_loss = float(self.body_widgets['stop_loss'][b_index].get())
+
+        # switch the strategy
+        if self.body_widgets['activation'][b_index].cget("text") == "OFF":
+            # deactivate the widgets to prevent user from changing the parameters while the strategy is running
+            for param in self._base_params:
+                code_name = param['code_name']
+
+                if code_name != "activation" and "_var" not in code_name:
+                    self.body_widgets[code_name][b_index].config(state=tk.DISABLED) # disable the widget
+
+            self.body_widgets['activation'][b_index].config(bg=st.GREEN, text="ON")
+            self.root.logging_frame.add_log(f"{strat_selected} strategy on {symbol} / {timeframe} started")
+
+        else:
+            for param in self._base_params:
+                code_name = param['code_name']
+
+                if code_name != "activation" and "_var" not in code_name:
+                    self.body_widgets[code_name][b_index].config(state=tk.NORMAL) # enable the widget
+
+            self.body_widgets['activation'][b_index].config(bg=st.RED, text="OFF")
+            self.root.logging_frame.add_log(f"{strat_selected} strategy on {symbol} / {timeframe} stopped")
 
     def _delete_row(self, b_index: int):
 

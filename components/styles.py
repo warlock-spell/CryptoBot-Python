@@ -15,3 +15,4 @@ GLOBAL_FONT = ("Calibri", 12, "normal")
 BOLD_FONT = ("Calibri", 12, "bold")
 
 RED = "darkred"
+GREEN = "darkgreen"
