@@ -9,13 +9,21 @@ import typing
 
 
 import components.styles as st
+from connectors.binance_futures import BinanceFuturesClient
+from connectors.bitmex import BitmexClient
 
 
 class StrategyEditor(tk.Frame):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, binance: BinanceFuturesClient, bitmex: BitmexClient, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._all_contracts = ["BTCUSDT", "ETHUSDT"]
+        self._exchanges = {"Binance": binance, "Bitmex": bitmex}
+
+        self._all_contracts = []
+        for exchange, client in self._exchanges.items():
+            for symbol, contract in client.contracts.items():
+                self._all_contracts.append(f"{symbol}_{exchange.capitalize()}")
+
         self._all_timeframes = ["1m", "5m", "15m", "1h", "4h"]
 
         self._commands_frame = tk.Frame(self, bg=st.BG_COLOR_1)
