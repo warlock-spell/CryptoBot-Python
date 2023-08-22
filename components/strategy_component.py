@@ -7,17 +7,18 @@
 import tkinter as tk
 import typing
 
-
 import components.styles as st
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.bitmex import BitmexClient
+from strategies.strat_breakout import BreakoutStrategy
+from strategies.strat_technical import TechnicalStrategy
 
 
 class StrategyEditor(tk.Frame):
     def __init__(self, root, binance: BinanceFuturesClient, bitmex: BitmexClient, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.root = root # to access the logger
+        self.root = root  # to access the logger
 
         self._exchanges = {"Binance": binance, "Bitmex": bitmex}
 
@@ -107,9 +108,9 @@ class StrategyEditor(tk.Frame):
 
         self._extra_params = {
             "Technical": [
-                {"code_name": "ema_fast", "name": "MACD Fast Length", "widget": tk.Entry, "data_type": int },
-                {"code_name": "ema_slow", "name": "MACD Slow Length", "widget": tk.Entry, "data_type": int },
-                {"code_name": "ema_signal", "name": "MACD Signal Length", "widget": tk.Entry, "data_type": int },
+                {"code_name": "ema_fast", "name": "MACD Fast Length", "widget": tk.Entry, "data_type": int},
+                {"code_name": "ema_slow", "name": "MACD Slow Length", "widget": tk.Entry, "data_type": int},
+                {"code_name": "ema_signal", "name": "MACD Signal Length", "widget": tk.Entry, "data_type": int},
             ],
             "Breakout": [
                 {"code_name": "min_volume", "name": "Minimum Volume", "widget": tk.Entry, "data_type": float},
@@ -129,7 +130,6 @@ class StrategyEditor(tk.Frame):
             if val['widget'] == tk.OptionMenu:
                 self.body_widgets[f'{val["code_name"]}_var'] = dict()
 
-
         self._body_index = 1
 
     def _add_strategy_row(self):
@@ -139,7 +139,7 @@ class StrategyEditor(tk.Frame):
             code_name = base_param['code_name']
             if base_param['widget'] == tk.OptionMenu:
                 self.body_widgets[code_name + "_var"][b_index] = tk.StringVar()
-                self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0]) # setting default values
+                self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0])  # setting default values
                 self.body_widgets[code_name][b_index] = tk.OptionMenu(self._table_frame,
                                                                       self.body_widgets[code_name + "_var"][b_index],
                                                                       *base_param['values'], )
@@ -147,14 +147,15 @@ class StrategyEditor(tk.Frame):
 
             elif base_param['widget'] == tk.Entry:
                 self.body_widgets[code_name][b_index] = tk.Entry(self._table_frame,
-                                                                 justify=tk.CENTER,)
+                                                                 justify=tk.CENTER, )
 
             elif base_param['widget'] == tk.Button:
                 self.body_widgets[code_name][b_index] = tk.Button(self._table_frame,
-                                                                 text=base_param['text'],
-                                                                 bg=base_param['bg'],
-                                                                 fg=st.FG_COLOR_1,
-                                                                 command=lambda frozen_command = base_param['command']:frozen_command(b_index))
+                                                                  text=base_param['text'],
+                                                                  bg=base_param['bg'],
+                                                                  fg=st.FG_COLOR_1,
+                                                                  command=lambda frozen_command=base_param[
+                                                                      'command']: frozen_command(b_index))
             else:
                 # do nothing
                 continue
@@ -181,7 +182,7 @@ class StrategyEditor(tk.Frame):
         self._popup_window.config(bg=st.BG_COLOR_1)
         self._popup_window.attributes('-topmost', 'true')
 
-        self._popup_window.geometry(f"+{x-80}+{y+30}")
+        self._popup_window.geometry(f"+{x - 80}+{y + 30}")
 
         strat_selected = self.body_widgets['strategy_type_var'][b_index].get()
 
@@ -190,11 +191,13 @@ class StrategyEditor(tk.Frame):
         for param in self._extra_params[strat_selected]:
             code_name = param['code_name']
 
-            temp_label = tk.Label(self._popup_window, bg=st.BG_COLOR_1, fg=st.FG_COLOR_1, text=param['name'], font=st.BOLD_FONT)
+            temp_label = tk.Label(self._popup_window, bg=st.BG_COLOR_1, fg=st.FG_COLOR_1, text=param['name'],
+                                  font=st.BOLD_FONT)
             temp_label.grid(row=row_no, column=0)
 
             if param['widget'] == tk.Entry:
-                self._extra_input[code_name] = tk.Entry(self._popup_window, justify=tk.CENTER, bg=st.BG_COLOR_2, fg=st.FG_COLOR_1, insertbackground=st.FG_COLOR_1)
+                self._extra_input[code_name] = tk.Entry(self._popup_window, justify=tk.CENTER, bg=st.BG_COLOR_2,
+                                                        fg=st.FG_COLOR_1, insertbackground=st.FG_COLOR_1)
 
                 # if parametric value is already set, then set the entry to that value
                 if self._additional_params[b_index][code_name] is not None:
@@ -209,9 +212,9 @@ class StrategyEditor(tk.Frame):
             row_no += 1
 
         # Validation
-        validation_button = tk.Button(self._popup_window, text="Validate", bg=st.BG_COLOR_2, fg=st.FG_COLOR_1, command=lambda: self._validate_popup(b_index))
+        validation_button = tk.Button(self._popup_window, text="Validate", bg=st.BG_COLOR_2, fg=st.FG_COLOR_1,
+                                      command=lambda: self._validate_popup(b_index))
         validation_button.grid(row=row_no, column=0, columnspan=2)
-
 
     def _validate_popup(self, b_index: int):
 
@@ -223,11 +226,10 @@ class StrategyEditor(tk.Frame):
             if self._extra_input[code_name].get() == "":
                 self._additional_params[b_index][code_name] = None
             else:
-                self._additional_params[b_index][code_name] = param['data_type'](self._extra_input[code_name].get()) # convert to the correct data type from string
+                self._additional_params[b_index][code_name] = param['data_type'](
+                    self._extra_input[code_name].get())  # convert to the correct data type from string
 
-
-        self._popup_window.destroy() # destroy the popup window when validation is done
-
+        self._popup_window.destroy()  # destroy the popup window when validation is done
 
     def _switch_strategy(self, b_index: int):
 
@@ -245,21 +247,36 @@ class StrategyEditor(tk.Frame):
 
         # if all parameters are set, then switch the strategy
         # save the current strategy
-        symbol = self.body_widgets['contract_var'][b_index].get().split("_")[0] # contract is in the format of "Symbol_Exchange"
+        symbol = self.body_widgets['contract_var'][b_index].get().split("_")[
+            0]  # contract is in the format of "Symbol_Exchange"
         exchange = self.body_widgets['contract_var'][b_index].get().split("_")[1]
         timeframe = self.body_widgets['timeframe_var'][b_index].get()
-        balance_pct = float(self.body_widgets['balance_pct'][b_index].get()) # entry box value is always string
+        balance_pct = float(self.body_widgets['balance_pct'][b_index].get())  # entry box value is always string
         take_profit = float(self.body_widgets['take_profit'][b_index].get())
         stop_loss = float(self.body_widgets['stop_loss'][b_index].get())
 
+        contract = self._exchanges[exchange].contracts[symbol]
+
         # switch the strategy
         if self.body_widgets['activation'][b_index].cget("text") == "OFF":
+
+            if strat_selected == "Technical":
+                new_strategy = TechnicalStrategy(contract, exchange, timeframe, balance_pct, take_profit, stop_loss,
+                                                 self._additional_params[b_index])
+
+            elif strat_selected == "Breakout":
+                new_strategy = BreakoutStrategy(contract, exchange, timeframe, balance_pct, take_profit, stop_loss,
+                                                 self._additional_params[b_index])
+
+            else:
+                return
+
             # deactivate the widgets to prevent user from changing the parameters while the strategy is running
             for param in self._base_params:
                 code_name = param['code_name']
 
                 if code_name != "activation" and "_var" not in code_name:
-                    self.body_widgets[code_name][b_index].config(state=tk.DISABLED) # disable the widget
+                    self.body_widgets[code_name][b_index].config(state=tk.DISABLED)  # disable the widget
 
             self.body_widgets['activation'][b_index].config(bg=st.GREEN, text="ON")
             self.root.logging_frame.add_log(f"{strat_selected} strategy on {symbol} / {timeframe} started")
@@ -269,7 +286,7 @@ class StrategyEditor(tk.Frame):
                 code_name = param['code_name']
 
                 if code_name != "activation" and "_var" not in code_name:
-                    self.body_widgets[code_name][b_index].config(state=tk.NORMAL) # enable the widget
+                    self.body_widgets[code_name][b_index].config(state=tk.NORMAL)  # enable the widget
 
             self.body_widgets['activation'][b_index].config(bg=st.RED, text="OFF")
             self.root.logging_frame.add_log(f"{strat_selected} strategy on {symbol} / {timeframe} stopped")
@@ -280,5 +297,3 @@ class StrategyEditor(tk.Frame):
             self.body_widgets[element['code_name']][b_index].grid_forget()
 
             del self.body_widgets[element['code_name']][b_index]
-
-
