@@ -271,6 +271,20 @@ class StrategyEditor(tk.Frame):
             else:
                 return
 
+            new_strategy.candles = self._exchanges[exchange].get_historical_candles(contract, timeframe)
+
+            if len(new_strategy.candles) == 0:
+                self.root.logging_frame.add_log(f"Failed to fetch historical data for {contract.symbol}")
+                # proceeds forward only if candle data is fetched else return
+                return
+
+            # binance has "invalid close opcode" error when subscribing more than 200 channel at once
+            # hence it is subscribed from here instead of the connector _on_open method
+            if exchange == "Binance":
+                self._exchanges[exchange].subscribe_channel([contract], "aggTrage")
+
+            self._exchanges[exchange].strategies[b_index] = new_strategy
+
             # deactivate the widgets to prevent user from changing the parameters while the strategy is running
             for param in self._base_params:
                 code_name = param['code_name']
@@ -282,6 +296,10 @@ class StrategyEditor(tk.Frame):
             self.root.logging_frame.add_log(f"{strat_selected} strategy on {symbol} / {timeframe} started")
 
         else:
+
+            # delete key from the dict when turned off
+            del self._exchanges[exchange].strategies[b_index]
+
             for param in self._base_params:
                 code_name = param['code_name']
 

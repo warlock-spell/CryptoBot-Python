@@ -16,6 +16,8 @@ import typing
 from urllib.parse import urlencode
 
 from connectors.models import Balance, Candle, Contract, OrderStatus
+from strategies.strat_technical import TechnicalStrategy
+from strategies.strat_breakout import BreakoutStrategy
 
 logger = logging.getLogger()
 
@@ -34,6 +36,8 @@ class BinanceFuturesClient:
         self._secret_key = secret_key
         self._websocket_id = 1
         self._ws = None
+
+        self.strategies: typing.Dict[int, typing.Union[TechnicalStrategy, BreakoutStrategy]] = dict()
 
         self.contracts = self.get_contracts()
         self.balances = self.get_balances()
@@ -244,6 +248,12 @@ class BinanceFuturesClient:
                     self.prices[symbol]['ask'] = float(data['a'])
 
                 # print(self.prices[symbol])
+            elif data["e"] == "aggTrade":
+                symbol = data['s']
+
+                for key, strat in self.strategies.items():
+                    if strat.contract.symbol == symbol:
+                        strat.parse_trades(float(data['p']), float(data['p']), float(data['T'])) #price, size, timestamp
 
     def subscribe_channel_stream(self, contracts: typing.List[Contract], channel: str):
         # To subscribe a single stream of all symbols, use !bookTicker and don't send a symbol parameter
