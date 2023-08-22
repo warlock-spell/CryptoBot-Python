@@ -111,6 +111,7 @@ class StrategyEditor(tk.Frame):
                 {"code_name": "ema_fast", "name": "MACD Fast Length", "widget": tk.Entry, "data_type": int},
                 {"code_name": "ema_slow", "name": "MACD Slow Length", "widget": tk.Entry, "data_type": int},
                 {"code_name": "ema_signal", "name": "MACD Signal Length", "widget": tk.Entry, "data_type": int},
+                {"code_name": "rsi_length", "name": "RSI Periods", "widget": tk.Entry, "data_type": int},
             ],
             "Breakout": [
                 {"code_name": "min_volume", "name": "Minimum Volume", "widget": tk.Entry, "data_type": float},
@@ -280,8 +281,11 @@ class StrategyEditor(tk.Frame):
 
             # binance has "invalid close opcode" error when subscribing more than 200 channel at once
             # hence it is subscribed from here instead of the connector _on_open method
+            # print(contract, contract.symbol)
             if exchange == "Binance":
-                self._exchanges[exchange].subscribe_channel([contract], "aggTrage")
+                self._exchanges[exchange].subscribe_channel(contract.symbol, "aggTrade")
+
+            new_strategy._check_signal()
 
             self._exchanges[exchange].strategies[b_index] = new_strategy
 
